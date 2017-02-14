@@ -21,13 +21,13 @@ Quantizer::~Quantizer ()
 		DeleteTree(&tree_);
 }
 
-void Quantizer::ProcessImage(unsigned char* image, unsigned int image_size)
+void Quantizer::ProcessImage(unsigned char* pixels, unsigned int image_bytes)
 {
-	for (unsigned int i = 0; i < image_size;)
+	for (unsigned int i = 0; i < image_bytes;)
 	{
-		unsigned char r = image[i++];
-		unsigned char g = image[i++];
-		unsigned char b = image[i++];
+		unsigned char r = pixels[i++];
+		unsigned char g = pixels[i++];
+		unsigned char b = pixels[i++];
 
 		AddColour(&tree_, r, g, b, colour_bits_, 0, &leaf_count_,
 			reducible_nodes_);

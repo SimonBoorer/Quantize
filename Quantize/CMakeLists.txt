@@ -14,6 +14,9 @@ source_group("" FILES ${QUANTIZE_SOURCES})
 # Adds sources to the Solution Explorer
 add_executable (Quantize ${QUANTIZE_SOURCES})
 
+# Properties->Linker->Input->Additional Dependencies
+target_link_libraries (Quantize OpenImageIO)
+
 # Creates a folder "executables" and adds target 
 # project (Quantize.vcproj) under it
 set_property(TARGET Quantize PROPERTY FOLDER "executables")
