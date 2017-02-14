@@ -1,9 +1,9 @@
 # The recommended way to collect sources in variable 
 # QUANTIZE_SOURCES by explicitly specifying the source files
-set  (QUANTIZE_SOURCES
-      "Quantizer.h"
-      "Quantizer.cpp"
-      "main.cpp")
+set (QUANTIZE_SOURCES
+	"Quantizer.h"
+	"Quantizer.cpp"
+	"main.cpp")
 
 # Create named folders for the sources within the .vcproj
 # Empty name lists them directly under the .vcproj
@@ -12,12 +12,12 @@ source_group("" FILES ${QUANTIZE_SOURCES})
 # Set Properties->General->Configuration Type to Application(.exe)
 # Creates Huffman.exe with the listed sources collected in the variables
 # Adds sources to the Solution Explorer
-add_executable (Quantizer ${QUANTIZE_SOURCES})
- 
+add_executable (Quantize ${QUANTIZE_SOURCES})
+
 # Creates a folder "executables" and adds target 
-# project (Quantizer.vcproj) under it
-set_property(TARGET Quantizer PROPERTY FOLDER "executables")
- 
-# Adds logic to INSTALL.vcproj to copy Quantizer.exe to destination directory
-install (TARGETS Quantizer
-         RUNTIME DESTINATION ${PROJECT_BINARY_DIR}/bin)
+# project (Quantize.vcproj) under it
+set_property(TARGET Quantize PROPERTY FOLDER "executables")
+
+# Adds logic to INSTALL.vcproj to copy Quantize.exe to destination directory
+install (TARGETS Quantize
+	RUNTIME DESTINATION ${PROJECT_BINARY_DIR}/bin)

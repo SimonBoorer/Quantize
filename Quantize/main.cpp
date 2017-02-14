@@ -1,45 +1,48 @@
 #include <fstream>
 #include "Quantizer.h"
 
-int main(int argc, char *argv[])
+int main()
 {
 	std::fstream file("test.raw", std::fstream::in | std::fstream::binary);
 
 	file.seekg(0, std::ios::end);
-	unsigned int nImageSize = (unsigned int) file.tellg();
+	unsigned int image_size = (unsigned int) file.tellg();
 	file.seekg(0, std::ios::beg);
 
-	unsigned char *pImage = new unsigned char[nImageSize];
-	file.read((char *)pImage, nImageSize);
+	unsigned char* image = new unsigned char[image_size];
+	file.read(reinterpret_cast<char*>(image), image_size);
 	file.close();
 
-	Quantize cQuantizer(255, 8);
-	cQuantizer.ProcessImage(pImage, nImageSize);
+	Quantizer quantizer(255, 8);
+	quantizer.ProcessImage(image, image_size);
 
 	file.close();
 	file.open("palette.raw", std::fstream::out | std::fstream::binary);
 
-	RGB *prgb = cQuantizer.GetColourTable();
-	unsigned int nColourCount = cQuantizer.GetColourCount();
+	unsigned int colour_count = quantizer.GetColourCount();
+	RGB* rgb = new RGB[colour_count]();
+        quantizer.GetColourTable(rgb);
 
-	for(unsigned int i = 0; i < nColourCount; ++i)
-		file << prgb[i].red << prgb[i].green << prgb[i].blue;
+	for (unsigned int i = 0; i < colour_count; ++i)
+		file << rgb[i].red << rgb[i].green << rgb[i].blue;
 
 	file.close();
 	file.open("quantize.raw", std::fstream::out | std::fstream::binary);
 
-	for(unsigned int i = 0; i < nImageSize;)
+	for (unsigned int i = 0; i < image_size;)
 	{
-		unsigned char r = pImage[i++];
-		unsigned char g = pImage[i++];
-		unsigned char b = pImage[i++];
+		unsigned char r = image[i++];
+		unsigned char g = image[i++];
+		unsigned char b = image[i++];
 
-		unsigned int nColourIndex = cQuantizer.GetColourIndex(r, g, b);
-		file << prgb[nColourIndex].red << prgb[nColourIndex].green << prgb[nColourIndex].blue;
+		unsigned int index = quantizer.GetColourIndex(r, g, b);
+		file << rgb[index].red << rgb[index].green << rgb[index].blue;
 	}
 
 	file.close();
 
-	delete[] pImage;
+        delete[] rgb;
+	delete[] image;
 	return 0;
 }
+

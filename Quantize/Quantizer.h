@@ -1,15 +1,5 @@
-#ifndef _QUANTIZE_H_
-#define _QUANTIZE_H_
-
-// Wicked Code, MSJ October 1997
-// http://www.microsoft.com/msj/1097/wicked1097.aspx
-// http://www.microsoft.com/msj/1097/wickedtextfigs.htm#fig3
-
-// Optimizing Color Quantization for ASP.NET Images
-// http://msdn.microsoft.com/en-us/library/aa479306.aspx
- 
-// Dr. Dobb's | Color Quantization using Octrees | January 1, 1996
-// http://git.hashcollision.org/projects/plt-misc/octree-quantization/article.pdf
+#ifndef QUANTIZE_H_
+#define QUANTIZE_H_
 
 struct RGB
 {
@@ -18,59 +8,57 @@ struct RGB
 	unsigned char blue;
 };
 
-class Quantize
+class Quantizer
 {
 protected:
 	struct Node
 	{
-		bool bIsLeaf;				// True if node has no children
+		bool is_leaf;			// True if node has no children
 
-		unsigned int nPixelCount;	// Number of pixels represented by this leaf
-		unsigned int nRedSum;		// Sum of red components
-		unsigned int nGreenSum;		// Sum of green components
-		unsigned int nBlueSum;		// Sum of blue components
+		unsigned int pixel_count;	// Number of pixels represented by this leaf
+		unsigned int red_sum;		// Sum of red components
+		unsigned int green_sum;		// Sum of green components
+		unsigned int blue_sum;		// Sum of blue components
 
-		unsigned int nLevel;
-		unsigned int nIndex;		// Colour table index
+		unsigned int index;		// Colour table index
 
-		Node *pChild[8];			// Pointer to child nodes
-		Node *pNext;				// Pointer to next reducible node
-	 };
+		Node* child[8];			// Pointer to child nodes
+		Node* next;			// Pointer to next reducible node
+	};
 
-     Node *m_pTree;
-     Node *m_pReducibleNodes[9];
+	Node* tree_;
+	Node* reducible_nodes_[9];
 
-	 unsigned int m_nLeafCount;
-     unsigned int m_nMaxColours;
-	 unsigned int m_nColourBits;
+	unsigned int leaf_count_;
+	unsigned int max_colours_;
+	unsigned int colour_bits_;
 
-	 RGB *m_prgb;
- 
- public:
-     Quantize(unsigned int nMaxColours, unsigned int nColourBits);
-     virtual ~Quantize();
+public:
+	Quantizer(unsigned int max_colours, unsigned int colour_bits);
+	virtual ~Quantizer();
 
-     void ProcessImage(unsigned char *pImage, unsigned int nImageSize);
+	void ProcessImage(unsigned char* image, unsigned int image_size);
 
-     unsigned int GetColourCount();
-     RGB *GetColourTable();
+	unsigned int GetColourCount();
+	void GetColourTable(RGB* rgb);
 
-	 unsigned int GetColourIndex(unsigned char r, unsigned char g, unsigned char b);
- 
- protected:
-     void AddColour(Node **ppNode, unsigned char r, unsigned char g, unsigned char b, unsigned int nColourBits,
-		 unsigned int nLevel, unsigned int *pLeafCount, Node **pReducibleNodes);
+	unsigned int GetColourIndex(unsigned char r, unsigned char g, unsigned char b);
 
-     Node *CreateNode(unsigned int nLevel, unsigned int nColourBits, unsigned int *pLeafCount,
-         Node **pReducibleNodes);
+protected:
+	void AddColour(Node** node, unsigned char r, unsigned char g, unsigned char b, unsigned int colour_bits,
+		unsigned int level, unsigned int* leaf_count, Node** reducible_nodes);
 
-     void ReduceTree(unsigned int nColourBits, unsigned int *pLeafCount,
-         Node** pReducibleNodes);
+	Node* CreateNode(unsigned int level, unsigned int colour_bits, unsigned int* leaf_count,
+		Node** reducible_nodes);
 
-     void DeleteTree(Node **ppNode);
+	void ReduceTree(unsigned int colour_bits, unsigned int* leaf_count,
+		Node** reducible_nodes);
 
-     void GetPaletteColours(Node *pTree, unsigned int *pIndex);
-	 void GetPaletteIndex(Node *pTree, unsigned char r, unsigned char g, unsigned char b, unsigned int nLevel, unsigned int *pIndex);
+	void DeleteTree(Node** node);
+
+	void GetPaletteColours(Node* node, RGB* rgb, unsigned int* index);
+	unsigned int GetPaletteIndex(Node* node, unsigned char r, unsigned char g, unsigned char b, unsigned int level);
 };
 
-#endif // _QUANTIZE_H_
+#endif // QUANTIZE_H_
+
