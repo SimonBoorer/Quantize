@@ -1,12 +1,32 @@
 # Quantize
-Image quantization using Gervautz-Purgathofer octree method
+A utility for quantizing an image using the Gervautz-Purgathofer octree method:
+* [Wicked Code -- MSJ, August 1996](https://www.microsoft.com/msj/archive/S3F1.aspx)
+* [Wicked Code, MSJ October 1997](http://www.microsoft.com/msj/1097/wicked1097.aspx)
+* [Color Quantization using Octrees | Dr Dobb's](http://www.drdobbs.com/cpp/color-quantization-using-octrees/184409805)
+* [Optimizing Color Quantization for ASP.NET Images](https://msdn.microsoft.com/en-us/library/aa479306.aspx)
 
-Wicked Code, MSJ October 1997
-http://www.microsoft.com/msj/1097/wicked1097.aspx
-http://www.microsoft.com/msj/1097/wickedtextfigs.htm#fig3
+# Build Instructions
+1. Install [CMake](https://cmake.org/) 3.1.0 or later
+2. Install [OpenImageIO](http://openimageio.org/)
+3. Clone a copy of the repository:
+    ```
+    git clone https://github.com/SimonBoorer/Quantize.git
+    ```
+4. Build with CMake:
+    ```
+    cd Quantize
+    mkdir build
+    cd build
+    cmake ..
+    ```
+ 
+# Usage
+```
+Usage: Quantize [options] input-file output-file
+Allowed options:
+  -h [ --help ]                   produce help message
+  -m [ --max-colours ] arg (=255) maximum number of colours in the palette
+  -b [ --colour-bits ] arg (=8)   number of significant bits in each 8-bit 
+                                  colour compartment
+```
 
-Optimizing Color Quantization for ASP.NET Images
-http://msdn.microsoft.com/en-us/library/aa479306.aspx
-
-Dr. Dobb's | Color Quantization using Octrees | January 1, 1996
-http://git.hashcollision.org/projects/plt-misc/octree-quantization/article.pdf
