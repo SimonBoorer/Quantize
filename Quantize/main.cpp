@@ -58,26 +58,33 @@ int main(int argc, char* argv[])
 			return 0;
 		}
 
-		const ImageSpec& inspec = in->spec();
-		int xres = inspec.width;
-		int yres = inspec.height;
-		int channels = inspec.nchannels;
-		int image_bytes = xres * yres * channels;
-		vector<unsigned char> inpixels(image_bytes);
-
-		if (!in->read_image(TypeDesc::UINT8, &inpixels[0]))
-		{
-			cerr << "Could not read pixels from " << inputfile
-				<< ", error = " << in->geterror() << endl;
-			ImageInput::destroy(in);
-			return 0;
-		}
-
 		unsigned int max_colours = vm["max-colours"].as<unsigned int>();
 		unsigned int colour_bits = vm["colour-bits"].as<unsigned int>();
-
 		Quantizer quantizer(max_colours, colour_bits);
-		quantizer.ProcessImage(&inpixels[0], image_bytes);
+
+		int num_of_subimages = 0;
+		ImageSpec spec;
+		while (in->seek_subimage(num_of_subimages, 0, spec))
+		{
+			// Note: spec has the format of the current subimage/miplevel
+			int xres = spec.width;
+			int yres = spec.height;
+			int channels = spec.nchannels;
+			int image_bytes = xres * yres * channels;
+			vector<unsigned char> pixels(image_bytes);
+
+			if (!in->read_image(TypeDesc::UINT8, &pixels[0]))
+			{
+				cerr << "Could not read pixels from " << inputfile
+					<< ", error = " << in->geterror() << endl;
+				ImageInput::destroy(in);
+				return 0;
+			}
+
+			quantizer.ProcessImage(&pixels[0], image_bytes);
+
+			++num_of_subimages;
+		}
 
 		string outputfile = vm["output-file"].as<string>();
 		ImageOutput* out = ImageOutput::create(outputfile);
@@ -90,11 +97,10 @@ int main(int argc, char* argv[])
 			return 0;
 		}
 
-		ImageSpec outspec = inspec;
-		if (!out->open(outputfile, outspec))
+		// Be sure we can support subimages
+		if (num_of_subimages > 1 && (!out->supports("multiimage") || !out->supports("appendsubimage")))
 		{
-			cerr << "Could not open " << outputfile
-				<< ", error = " << out->geterror() << endl;
+			std::cerr << "Does not support appending of subimages" << std::endl;
 			ImageInput::destroy(in);
 			ImageOutput::destroy(out);
 			return 0;
@@ -104,28 +110,55 @@ int main(int argc, char* argv[])
 		vector<RGB> rgb(colour_count);
 		quantizer.GetColourTable(&rgb[0]);
 
-		vector<unsigned char> outpixels(image_bytes);
+		// Use Create mode for the first level.
+		ImageOutput::OpenMode appendmode = ImageOutput::Create;
 
-		for (unsigned int i = 0; i < image_bytes; i += 3)
+		for (int i = 0; i < num_of_subimages; ++i)
 		{
-			unsigned char r = inpixels[i];
-			unsigned char g = inpixels[i + 1];
-			unsigned char b = inpixels[i + 2];
+			in->seek_subimage(i, 0, spec);
 
-			unsigned int index = quantizer.GetColourIndex(r, g, b);
+			if (!out->open(outputfile, spec, appendmode))
+			{
+				cerr << "Could not open " << outputfile
+					<< ", error = " << out->geterror() << endl;
+				ImageInput::destroy(in);
+				ImageOutput::destroy(out);
+				return 0;
+			}
 
-			outpixels[i] = rgb[index].red;
-			outpixels[i + 1] = rgb[index].green;
-			outpixels[i + 2] = rgb[index].blue;
-		}
+			// Note: spec has the format of the current subimage/miplevel
+			int xres = spec.width;
+			int yres = spec.height;
+			int channels = spec.nchannels;
+			int image_bytes = xres * yres * channels;
+			vector<unsigned char> pixels(image_bytes);
 
-		if (!out->write_image(TypeDesc::UINT8, &outpixels[0]))
-		{
-			cerr << "Could not write pixels to " << outputfile
-				<< ", error = " << out->geterror() << endl;
-			ImageInput::destroy(in);
-			ImageOutput::destroy(out);
-			return 0;
+			in->read_image(TypeDesc::UINT8, &pixels[0]);
+
+			for (unsigned int j = 0; j < image_bytes; j += 3)
+			{
+				unsigned char r = pixels[j];
+				unsigned char g = pixels[j + 1];
+				unsigned char b = pixels[j + 2];
+
+				unsigned int index = quantizer.GetColourIndex(r, g, b);
+
+				pixels[j] = rgb[index].red;
+				pixels[j + 1] = rgb[index].green;
+				pixels[j + 2] = rgb[index].blue;
+			}
+
+			if (!out->write_image(TypeDesc::UINT8, &pixels[0]))
+			{
+				cerr << "Could not write pixels to " << outputfile
+					<< ", error = " << out->geterror() << endl;
+				ImageInput::destroy(in);
+				ImageOutput::destroy(out);
+				return 0;
+			}
+
+			// Use AppendSubimage mode for subsequent levels
+			appendmode = ImageOutput::AppendSubimage;
 		}
 
 		if (!in->close())

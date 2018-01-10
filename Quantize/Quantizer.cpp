@@ -5,7 +5,7 @@
 Quantizer::Quantizer(unsigned int max_colours, unsigned int colour_bits)
 	: tree_(NULL), leaf_count_(0), max_colours_(max_colours)
 {
-	//if (colour_bits < 0 || colour_bits > 8)
+	//if (colour_bits <= 8)
 	//{
 	//}
 
@@ -181,10 +181,6 @@ unsigned int Quantizer::GetPaletteIndex(Node* node, unsigned char r, unsigned ch
 		int index = (((r & mask[level]) >> shift) << 2) |
 			(((g & mask[level]) >> shift) << 1) |
 			((b & mask[level]) >> shift);
-
-		if (r != g && r != b && g != b) {
-			shift++;
-		}
 
 		palette_index = GetPaletteIndex(node->child[index], r, g, b,
 			level + 1);
