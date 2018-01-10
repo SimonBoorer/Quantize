@@ -8,7 +8,7 @@ A utility for quantizing an image using the Gervautz-Purgathofer octree method:
 # Build Instructions
 1. Install [CMake](https://cmake.org/) 3.1.0 or later
 2. Install [Boost](http://www.boost.org/)
-3. Install [OpenImageIO](http://openimageio.org/)
+3. Install [OpenImageIO](http://openimageio.org/) 1.6 or later
 4. Clone a copy of the repository:
 
     ```

@@ -15,7 +15,7 @@ source_group("" FILES ${QUANTIZE_SOURCES})
 add_executable (Quantize ${QUANTIZE_SOURCES})
 
 # Properties->Linker->Input->Additional Dependencies
-target_link_libraries (Quantize boost_program_options OpenImageIO)
+target_link_libraries (Quantize boost_program_options OpenImageIO ${CMAKE_DL_LIBS})
 
 # Creates a folder "executables" and adds target 
 # project (Quantize.vcproj) under it

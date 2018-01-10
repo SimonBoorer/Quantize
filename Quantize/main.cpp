@@ -5,7 +5,7 @@ using namespace boost::program_options;
 using namespace std;
 
 #include <OpenImageIO/imageio.h>
-OIIO_NAMESPACE_USING
+using namespace OIIO;
 
 #include "Quantizer.h"
 
@@ -54,7 +54,7 @@ int main(int argc, char* argv[])
 		{
 			cerr << "Could not create an ImageInput for "
 				<< inputfile << ", error = "
-				<< OpenImageIO::geterror() << endl;
+				<< OIIO::geterror() << endl;
 			return 0;
 		}
 
@@ -85,7 +85,7 @@ int main(int argc, char* argv[])
 		{
 			cerr << "Could not create an ImageOutput for "
 				<< outputfile << ", error = "
-				<< OpenImageIO::geterror() << endl;
+				<< OIIO::geterror() << endl;
 			ImageInput::destroy(in);
 			return 0;
 		}
