@@ -8,6 +8,7 @@ using namespace std;
 using namespace OIIO;
 
 #include "Quantizer.h"
+#include "Dither.h"
 
 int main(int argc, char* argv[])
 {
@@ -71,7 +72,7 @@ int main(int argc, char* argv[])
 			int yres = spec.height;
 			int channels = spec.nchannels;
 			int image_bytes = xres * yres * channels;
-			vector<unsigned char> pixels(image_bytes);
+			vector<uint8_t> pixels(image_bytes);
 
 			if (!in->read_image(TypeDesc::UINT8, &pixels[0]))
 			{
@@ -106,9 +107,7 @@ int main(int argc, char* argv[])
 			return 0;
 		}
 
-		unsigned int colour_count = quantizer.GetColourCount();
-		vector<RGB> rgb(colour_count);
-		quantizer.GetColourTable(&rgb[0]);
+		Palette palette = quantizer.GetColourPalette();
 
 		// Use Create mode for the first level.
 		ImageOutput::OpenMode appendmode = ImageOutput::Create;
@@ -131,22 +130,11 @@ int main(int argc, char* argv[])
 			int yres = spec.height;
 			int channels = spec.nchannels;
 			int image_bytes = xres * yres * channels;
-			vector<unsigned char> pixels(image_bytes);
+			vector<uint8_t> pixels(image_bytes);
 
 			in->read_image(TypeDesc::UINT8, &pixels[0]);
 
-			for (unsigned int j = 0; j < image_bytes; j += 3)
-			{
-				unsigned char r = pixels[j];
-				unsigned char g = pixels[j + 1];
-				unsigned char b = pixels[j + 2];
-
-				unsigned int index = quantizer.GetColourIndex(r, g, b);
-
-				pixels[j] = rgb[index].red;
-				pixels[j + 1] = rgb[index].green;
-				pixels[j + 2] = rgb[index].blue;
-			}
+			DitherImage(&pixels[0], xres, yres, palette);
 
 			if (!out->write_image(TypeDesc::UINT8, &pixels[0]))
 			{

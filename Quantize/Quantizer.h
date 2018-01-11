@@ -1,29 +1,24 @@
-#ifndef QUANTIZE_H_
-#define QUANTIZE_H_
+#ifndef QUANTIZER_H_
+#define QUANTIZER_H_
 
-struct RGB
-{
-	unsigned char red;
-	unsigned char green;
-	unsigned char blue;
-};
+#include "Palette.h"
 
 class Quantizer
 {
 protected:
 	struct Node
 	{
-		bool is_leaf;			// True if node has no children
+		bool is_leaf;				// True if node has no children
 
 		unsigned int pixel_count;	// Number of pixels represented by this leaf
 		unsigned int red_sum;		// Sum of red components
 		unsigned int green_sum;		// Sum of green components
 		unsigned int blue_sum;		// Sum of blue components
 
-		unsigned int index;		// Colour table index
+		unsigned int index;			// Colour table index
 
-		Node* child[8];			// Pointer to child nodes
-		Node* next;			// Pointer to next reducible node
+		Node* child[8];				// Pointer to child nodes
+		Node* next;					// Pointer to next reducible node
 	};
 
 	Node* tree_;
@@ -39,10 +34,7 @@ public:
 
 	void ProcessImage(unsigned char* image, unsigned int image_size);
 
-	unsigned int GetColourCount();
-	void GetColourTable(RGB* rgb);
-
-	unsigned int GetColourIndex(unsigned char r, unsigned char g, unsigned char b);
+	Palette GetColourPalette();
 
 protected:
 	void AddColour(Node** node, unsigned char r, unsigned char g, unsigned char b, unsigned int colour_bits,
@@ -56,9 +48,8 @@ protected:
 
 	void DeleteTree(Node** node);
 
-	void GetPaletteColours(Node* node, RGB* rgb, unsigned int* index);
-	unsigned int GetPaletteIndex(Node* node, unsigned char r, unsigned char g, unsigned char b, unsigned int level);
+	void GetPaletteColours(Node* node, Palette& palette, unsigned int* index);
 };
 
-#endif // QUANTIZE_H_
+#endif // QUANTIZER_H_
 

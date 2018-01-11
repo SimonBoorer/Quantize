@@ -1,33 +1,31 @@
 #include "Quantizer.h"
-#include <climits>
-#include <cstring>
 
 Quantizer::Quantizer(unsigned int max_colours, unsigned int colour_bits)
-	: tree_(NULL), leaf_count_(0), max_colours_(max_colours)
+	: tree_(nullptr), leaf_count_(0), max_colours_(max_colours)
 {
 	//if (colour_bits <= 8)
 	//{
 	//}
 
 	for (int i = 0; i <= (int) colour_bits; i++)
-		reducible_nodes_[i] = NULL;
+		reducible_nodes_[i] = nullptr;
 
 	colour_bits_ = colour_bits;
 }
 
 Quantizer::~Quantizer ()
 {
-	if (tree_ != NULL)
+	if (tree_ != nullptr)
 		DeleteTree(&tree_);
 }
 
-void Quantizer::ProcessImage(unsigned char* pixels, unsigned int image_bytes)
+void Quantizer::ProcessImage(uint8_t* pixels, unsigned int image_bytes)
 {
 	for (unsigned int i = 0; i < image_bytes;)
 	{
-		unsigned char r = pixels[i++];
-		unsigned char g = pixels[i++];
-		unsigned char b = pixels[i++];
+		uint8_t r = pixels[i++];
+		uint8_t g = pixels[i++];
+		uint8_t b = pixels[i++];
 
 		AddColour(&tree_, r, g, b, colour_bits_, 0, &leaf_count_,
 			reducible_nodes_);
@@ -40,13 +38,13 @@ void Quantizer::ProcessImage(unsigned char* pixels, unsigned int image_bytes)
 	}
 }
 
-void Quantizer::AddColour(Node** node, unsigned char r, unsigned char g, unsigned char b,
+void Quantizer::AddColour(Node** node, uint8_t r, uint8_t g, uint8_t b,
 	unsigned int colour_bits, unsigned int level, unsigned int* leaf_count, Node** reducible_nodes)
 {
-	static unsigned char mask[8] = { 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01 };
+	static uint8_t mask[8] = { 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01 };
 
 	// If the node doesn't exist, create it.
-	if (*node == NULL)
+	if (*node == nullptr)
 	{
 		*node = CreateNode(level, colour_bits, leaf_count,
 			reducible_nodes);
@@ -76,8 +74,7 @@ void Quantizer::AddColour(Node** node, unsigned char r, unsigned char g, unsigne
 Quantizer::Node* Quantizer::CreateNode(unsigned int level, unsigned int colour_bits, unsigned int* leaf_count,
 	Node** reducible_nodes)
 {
-	Node* node = new Node;
-	memset(node, 0, sizeof(Node));
+	Node* node = new Node{};
 
 	node->is_leaf = (level == colour_bits);
 	if (node->is_leaf)
@@ -96,7 +93,7 @@ void Quantizer::ReduceTree(unsigned int colour_bits, unsigned int* leaf_count,
 {
 	// Find the deepest level containing at least one reducible node.
 	int i;
-	for (i = colour_bits - 1; (i > 0) && (reducible_nodes[i] == NULL); i--);
+	for (i = colour_bits - 1; (i > 0) && (reducible_nodes[i] == nullptr); i--);
 
 	// Reduce the node most recently added to the list at level i.
 	Node* node = reducible_nodes[i];
@@ -109,7 +106,7 @@ void Quantizer::ReduceTree(unsigned int colour_bits, unsigned int* leaf_count,
 
 	for (i = 0; i < 8; i++)
 	{
-		if (node->child[i] != NULL)
+		if (node->child[i] != nullptr)
 		{
 			red_sum += node->child[i]->red_sum;
 			green_sum += node->child[i]->green_sum;
@@ -117,7 +114,7 @@ void Quantizer::ReduceTree(unsigned int colour_bits, unsigned int* leaf_count,
 			node->pixel_count += node->child[i]->pixel_count;
 
 			delete node->child[i];
-			node->child[i] = NULL;
+			node->child[i] = nullptr;
 			children++;
 		}
 	}
@@ -130,29 +127,29 @@ void Quantizer::ReduceTree(unsigned int colour_bits, unsigned int* leaf_count,
 	*leaf_count -= (children - 1);
 }
 
-
 void Quantizer::DeleteTree (Node** node)
 {
 	for (int i = 0; i < 8; i++)
 	{
-		if ((*node)->child[i] != NULL)
-			DeleteTree (&((*node)->child[i]));
+		if ((*node)->child[i] != nullptr)
+			DeleteTree(&((*node)->child[i]));
 	}
 	
 	delete[] *node;
-	*node = NULL;
+	*node = nullptr;
 }
 
-void Quantizer::GetPaletteColours(Node* node, RGB* rgb, unsigned int* index)
+void Quantizer::GetPaletteColours(Node* node, Palette& palette, unsigned int* index)
 {
 	if (node->is_leaf)
 	{
-		rgb[*index].red =
-			(unsigned char) ((node->red_sum) / (node->pixel_count));
-		rgb[*index].green =
-			(unsigned char) ((node->green_sum) / (node->pixel_count));
-		rgb[*index].blue =
-			(unsigned char) ((node->blue_sum) / (node->pixel_count));
+		Colour colour =
+		{
+			static_cast<uint8_t>(node->red_sum / node->pixel_count),
+			static_cast<uint8_t>(node->green_sum / node->pixel_count),
+			static_cast<uint8_t>(node->blue_sum / node->pixel_count),
+		};
+		palette.push_back(colour);
 
 		node->index = *index;
 		(*index)++;
@@ -162,46 +159,16 @@ void Quantizer::GetPaletteColours(Node* node, RGB* rgb, unsigned int* index)
 		for (int i = 0; i < 8; i++)
 		{
 			if (node->child[i])
-				GetPaletteColours(node->child[i], rgb, index);
+				GetPaletteColours(node->child[i], palette, index);
 		}
 	}
 }
 
-unsigned int Quantizer::GetPaletteIndex(Node* node, unsigned char r, unsigned char g, unsigned char b,
-	 unsigned int level)
+Palette Quantizer::GetColourPalette()
 {
-	static unsigned char mask[8] = { 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01 };
-
-	unsigned int palette_index = node->index;
-
-	// Recurse a level deeper if the node is not a leaf.
-	if (!node->is_leaf)
-	{
-		int shift = 7 - level;
-		int index = (((r & mask[level]) >> shift) << 2) |
-			(((g & mask[level]) >> shift) << 1) |
-			((b & mask[level]) >> shift);
-
-		palette_index = GetPaletteIndex(node->child[index], r, g, b,
-			level + 1);
-	}
-
-	return palette_index;
+	Palette palette;
+	palette.reserve(leaf_count_);
+    unsigned int index = 0;
+    GetPaletteColours(tree_, palette, &index);
+	return palette;
 }
-
-unsigned int Quantizer::GetColourCount()
-{
-	return leaf_count_;
-}
-
-void Quantizer::GetColourTable(RGB* rgb)
-{
-        unsigned int index = 0;
-        GetPaletteColours(tree_, rgb, &index);
-}
-
-unsigned int Quantizer::GetColourIndex(unsigned char r, unsigned char g, unsigned char b)
-{
-	return GetPaletteIndex(tree_, r, g, b, 0);
-}
-

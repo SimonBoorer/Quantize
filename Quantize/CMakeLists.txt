@@ -1,6 +1,10 @@
 # The recommended way to collect sources in variable 
 # QUANTIZE_SOURCES by explicitly specifying the source files
 set (QUANTIZE_SOURCES
+	"Dither.h"
+	"Dither.cpp"
+	"Palette.h"
+	"Palette.cpp"
 	"Quantizer.h"
 	"Quantizer.cpp"
 	"main.cpp")
