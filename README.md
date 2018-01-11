@@ -21,6 +21,7 @@ A utility for quantizing an image using the Gervautz-Purgathofer octree method:
     mkdir build
     cd build
     cmake ..
+    make
     ```
  
 # Usage
